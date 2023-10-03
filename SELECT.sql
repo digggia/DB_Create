@@ -21,7 +21,7 @@ WHERE singer_name NOT LIKE '% %';
 
 SELECT track_name
 FROM Track
-WHERE track_name ILIKE '%мой%' OR track_name ILIKE '%my%';
+WHERE track_name ~* '\m(my|мой)\M';
 
 -- ========================
 
@@ -44,9 +44,12 @@ GROUP BY a.album_name;
 
 SELECT s.singer_name
 FROM Singer s
-LEFT JOIN Singer_Album sa ON s.singer_id = sa.singer_id
-LEFT JOIN Album a ON sa.album_id = a.album_id
-WHERE a.release_year <> '2020-01-01' OR a.release_year IS NULL;
+WHERE s.singer_id NOT IN (
+    SELECT sa2.singer_id
+    FROM Singer_Album sa2
+    JOIN Album a2 ON sa2.album_id = a2.album_id
+    WHERE a2.release_year = '2020-01-01'
+);
 
 
 SELECT c.collection_name
@@ -63,8 +66,9 @@ WHERE s.singer_name = 'Adele';
 SELECT DISTINCT a.album_name
 FROM Album a
 JOIN Singer_Album sa ON a.album_id = sa.album_id
-JOIN Genre_Singer gs ON sa.singer_id = gs.singer_id
-GROUP BY a.album_name
+JOIN Singer s ON sa.singer_id = s.singer_id
+JOIN Genre_Singer gs ON s.singer_id = gs.singer_id
+GROUP BY a.album_name, s.singer_id
 HAVING COUNT(DISTINCT gs.genre_id) > 1;
 
 SELECT t.track_name
